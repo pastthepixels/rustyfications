@@ -1,5 +1,3 @@
-// TODO probably we need some kind of window factory
-
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
 use adw::prelude::*;
