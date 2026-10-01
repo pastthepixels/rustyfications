@@ -13,6 +13,7 @@ use super::window::Window;
 
 pub fn init_layer_shell(window: &impl LayerShell) {
     window.init_layer_shell();
+    window.set_namespace("notifications");
 
     let edges = CONFIG.lock().unwrap().edges.clone();
 
