@@ -158,28 +158,28 @@ impl Window {
         self.set_image_icon(details);
     }
 
-    fn find_app_info(&self, details: &Details) -> Option<gio::DesktopAppInfo> {
+    fn find_app_info(&self, details: &Details) -> Option<gio::AppInfo> {
         details
             .hints
             .desktop_entry
             .as_deref()
             .and_then(|de| {
-                gio::DesktopAppInfo::new(de)
-                    .or_else(|| gio::DesktopAppInfo::new(&format!("{}.desktop", de)))
+                gio::AppInfo::default_for_uri_scheme(de)
+                    .or_else(|| gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", de)))
             })
             .or_else(|| {
                 details.app_name.as_deref().and_then(|an| {
-                    gio::DesktopAppInfo::new(an)
-                        .or_else(|| gio::DesktopAppInfo::new(&format!("{}.desktop", an)))
-                        .or_else(|| gio::DesktopAppInfo::new(&an.to_lowercase()))
+                    gio::AppInfo::default_for_uri_scheme(an)
+                        .or_else(|| gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", an)))
+                        .or_else(|| gio::AppInfo::default_for_uri_scheme(&an.to_lowercase()))
                         .or_else(|| {
-                            gio::DesktopAppInfo::new(&format!("{}.desktop", an.to_lowercase()))
+                            gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", an.to_lowercase()))
                         })
                 })
             })
     }
 
-    fn set_app_icon(&self, app_info: Option<gio::DesktopAppInfo>) {
+    fn set_app_icon(&self, app_info: Option<gio::AppInfo>) {
         if let Some(icon_name) =
             app_info.and_then(|app| app.icon().and_then(|icon| icon.to_string()))
         {

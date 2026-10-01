@@ -6,8 +6,9 @@ authors = ["bzglve"]
 
 [dependencies]
 # gui
-gtk = { version = "0.9", package = "gtk4" }
-gtk-layer-shell = { version = "0.4", package = "gtk4-layer-shell" }
+gtk = { version = "^0.11", package = "gtk4" }
+gtk-layer-shell = { version = "^0.8", package = "gtk4-layer-shell" }
+adw = { version = "^0.9", package = "libadwaita", features = ["v1_8"] }
 
 # logging
 log = "0.4"
