@@ -95,11 +95,14 @@ impl Window {
         let window = Window::from_details(details.clone(), iface.clone());
         init_layer_shell(&window.inner);
         window.inner.set_application(Some(&application));
-        window.inner.add_css_class("selectable");
+        window.inner.set_receives_default(true);
         window.inner.connect_close_request(clone!(
             #[strong]
             window,
             move |_| {
+                unsafe {
+                    window.inner.set_data("close-reason", Reason::Dismissed);
+                }
                 window.stop_timeout();
                 glib::Propagation::Proceed
             }
@@ -370,13 +373,17 @@ impl Window {
             .name("notification")
             .build();
 
-        let progress = gtk::ProgressBar::builder().fraction(1.).build();
+        let progress = gtk::ProgressBar::builder()
+            .fraction(1.)
+            .vexpand(false)
+            .valign(Align::Start)
+            .build();
         progress.add_css_class("osd");
 
         let app_name = gtk::Label::builder()
             .name("app_name")
             .justify(Justification::Left)
-            .halign(Align::Start)
+            .halign(Align::Center)
             .ellipsize(EllipsizeMode::End)
             .sensitive(false)
             .build();
@@ -384,7 +391,7 @@ impl Window {
             .name("app_icon")
             .css_classes(["lowres-icon"])
             .hexpand(true)
-            .halign(Align::End)
+            .halign(Align::Center)
             .visible(true)
             .build();
         let app_name_box = gtk::Box::builder()
@@ -407,6 +414,7 @@ impl Window {
 
         let icon = gtk::Image::builder()
             .name("image")
+            .css_classes(["round"])
             .visible(false)
             .pixel_size(CONFIG.lock().unwrap().icon_size)
             .valign(Align::Center)
@@ -455,8 +463,6 @@ impl Window {
             .valign(Align::Start)
             .spacing(5)
             .build();
-        content.append(&app_name_box);
-        content.append(&summary_box);
         content.append(&body);
         content.append(&reply_revealer);
 
@@ -467,18 +473,15 @@ impl Window {
         body_box.append(&icon);
         body_box.append(&content);
 
-        let main_box = gtk::Box::builder()
-            .orientation(Orientation::Vertical)
-            .spacing(5)
-            .margin_top(5)
-            .margin_start(5)
-            .margin_bottom(5)
-            .margin_end(5)
-            .build();
-        main_box.append(&body_box);
-        main_box.append(&actions_box);
-
-        let overlay = gtk::Overlay::builder().child(&main_box).build();
+        let header = adw::HeaderBar::new();
+        let toolbar_view = adw::ToolbarView::new();
+        let overlay = gtk::Overlay::builder().child(&toolbar_view).build();
+        toolbar_view.set_content(Some(&body_box));
+        toolbar_view.add_top_bar(&header);
+        toolbar_view.add_bottom_bar(&actions_box);
+        header.pack_start(&summary_box);
+        header.pack_end(&app_name_box);
+        header.set_show_title(false);
         overlay.add_overlay(&progress);
 
         inner.set_content(Some(&overlay));
@@ -504,57 +507,6 @@ impl Window {
     pub fn from_details(value: Details, iface: Rc<IFaceRef>) -> Self {
         let mut _self = Self::build_widgets_tree(&value);
         _self.update_from_details(&value, iface.clone());
-
-        let event_conntroller_motion = gtk::EventControllerMotion::new();
-        _self
-            .app_icon
-            .add_controller(event_conntroller_motion.clone());
-
-        event_conntroller_motion.connect_enter(clone!(
-            #[strong(rename_to=app_icon)]
-            _self.app_icon,
-            move |_, _, _| {
-                if app_icon.icon_name().is_some() || app_icon.file().is_some() {
-                    if let Some(icon_name) = app_icon.icon_name() {
-                        unsafe {
-                            app_icon.set_data("icon-name", icon_name);
-                        }
-                    }
-                    if let Some(file) = app_icon.file() {
-                        unsafe {
-                            app_icon.set_data("file", file);
-                        }
-                    }
-                }
-
-                app_icon.set_visible(false);
-            }
-        ));
-
-        event_conntroller_motion.connect_leave(clone!(
-            #[strong(rename_to=app_icon)]
-            _self.app_icon,
-            move |_| {
-                let icon_name = unsafe {
-                    app_icon
-                        .data::<glib::GString>("icon-name")
-                        .map(|v| v.as_ref().clone())
-                };
-                let file = unsafe {
-                    app_icon
-                        .data::<glib::GString>("file")
-                        .map(|v| v.as_ref().clone())
-                };
-
-                if let Some(icon_name) = icon_name {
-                    app_icon.set_icon_name(Some(&icon_name));
-                } else {
-                    app_icon.set_from_file(file);
-                }
-            }
-        ));
-
-        // hover events
 
         // FIXME new window breaks focus
         // it invokes leave and notification can be lost while we are "holding" it

@@ -120,7 +120,7 @@ mod defaults {
     }
 
     pub fn show_app_name() -> bool {
-        false
+        true
     }
 
     pub fn window_size() -> (i32, i32) {
