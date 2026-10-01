@@ -57,6 +57,10 @@ mod css {
       box-shadow: unset;
     }}
 
+    #notification .body {{
+        margin: 4pt;
+    }}
+
     #notification.hide {{
       opacity: 0;
     }}

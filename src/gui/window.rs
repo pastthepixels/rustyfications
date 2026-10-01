@@ -414,8 +414,9 @@ impl Window {
 
         let icon = gtk::Image::builder()
             .name("image")
-            .css_classes(["round"])
             .visible(false)
+            .overflow(gtk::Overflow::Hidden)
+            .css_classes(["card"])
             .pixel_size(CONFIG.lock().unwrap().icon_size)
             .valign(Align::Center)
             .halign(Align::End)
@@ -468,8 +469,24 @@ impl Window {
 
         let body_box = gtk::Box::builder()
             .orientation(Orientation::Horizontal)
+            .css_classes(["body"])
+            .visible(false)
             .spacing(5)
             .build();
+        body.connect_label_notify(clone!(
+            #[strong]
+            body_box,
+            move |_| {
+                body_box.set_visible(true);
+            }
+        ));
+        icon.connect_visible_notify(clone!(
+            #[strong]
+            body_box,
+            move |_| {
+                body_box.set_visible(true);
+            }
+        ));
         body_box.append(&icon);
         body_box.append(&content);
 
