@@ -13,6 +13,7 @@ use super::window::Window;
 
 pub fn init_layer_shell(window: &impl LayerShell) {
     window.init_layer_shell();
+
     window.set_namespace(Some("notifications"));
 
     let edges = CONFIG.lock().unwrap().edges.clone();
@@ -49,7 +50,7 @@ pub fn margins_update(runtime_data: RuntimeData) {
             window.inner.set_margin(Edge::Bottom, top_bottom_indent);
         }
 
-        top_bottom_indent += window.inner.height()
+        top_bottom_indent += window.inner.allocation().height()
             + edges
                 .get(&ConfigEdge::Left)
                 .or_else(|| edges.get(&ConfigEdge::Right))

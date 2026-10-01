@@ -2,12 +2,12 @@
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc, time::Duration};
 
+use adw::prelude::*;
 use gtk::{
     gdk_pixbuf::Pixbuf,
     gio,
     glib::{self, clone, JoinHandle},
     pango::{self, EllipsizeMode},
-    prelude::*,
     Align, Justification, Orientation,
 };
 use gtk_layer_shell::{KeyboardMode, LayerShell};
@@ -35,7 +35,7 @@ pub struct Window {
     actions_box: gtk::Box,
     expire_timeout: Duration,
     thandle: Rc<RefCell<Option<JoinHandle<()>>>>,
-    pub inner: gtk::Window,
+    pub inner: adw::ApplicationWindow,
 }
 
 impl Window {
@@ -68,7 +68,7 @@ impl Window {
 
     pub fn build(
         details: &Details,
-        application: gtk::Application,
+        application: adw::Application,
         iface: Rc<IFaceRef>,
         runtime_data: RuntimeData,
     ) -> Self {
@@ -76,6 +76,7 @@ impl Window {
         let window = Window::from_details(details.clone(), iface.clone());
         init_layer_shell(&window.inner);
         window.inner.set_application(Some(&application));
+        window.inner.add_css_class("selectable");
 
         window.setup_reply_handler(details, iface.clone());
         runtime_data
@@ -170,10 +171,15 @@ impl Window {
             .or_else(|| {
                 details.app_name.as_deref().and_then(|an| {
                     gio::AppInfo::default_for_uri_scheme(an)
-                        .or_else(|| gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", an)))
+                        .or_else(|| {
+                            gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", an))
+                        })
                         .or_else(|| gio::AppInfo::default_for_uri_scheme(&an.to_lowercase()))
                         .or_else(|| {
-                            gio::AppInfo::default_for_uri_scheme(&format!("{}.desktop", an.to_lowercase()))
+                            gio::AppInfo::default_for_uri_scheme(&format!(
+                                "{}.desktop",
+                                an.to_lowercase()
+                            ))
                         })
                 })
             })
@@ -331,9 +337,9 @@ impl Window {
     fn build_widgets_tree(details: &Details) -> Self {
         let config = CONFIG.lock().unwrap().clone();
 
-        let inner = gtk::Window::builder()
-            .default_width(config.window_size.0)
-            .default_height(config.window_size.1)
+        let inner = adw::ApplicationWindow::builder()
+            .width_request(config.window_size.0)
+            .height_request(config.window_size.1)
             .name("notification")
             .build();
 
@@ -440,7 +446,7 @@ impl Window {
         main_box.append(&body_box);
         main_box.append(&actions_box);
 
-        inner.set_child(Some(&main_box));
+        inner.set_content(Some(&main_box));
 
         Self {
             id: details.id,

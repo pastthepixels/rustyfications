@@ -42,12 +42,12 @@ mod css {
         provider.load_from_data(&format!(
             "
     #notification {{
-      border: 1pt solid {borders};
-      border-radius: 5pt;
+      padding: 4pt;
+      box-shadow: unset;
     }}
     
     #notification.hover {{
-      background-color: {theme_base_color};
+      background-color: color-mix(in srgb, var(--window-fg-color) 15%, var(--window-bg-color));
     }}",
         ));
 

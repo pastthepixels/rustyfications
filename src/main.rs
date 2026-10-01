@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let runtime_data = RuntimeData::default();
 
-    let application = gtk::Application::new(Some(MAIN_APP_ID), Default::default());
+    let application = adw::Application::new(Some(MAIN_APP_ID), Default::default());
 
     let (sender, receiver) = mpsc::channel(100);
     let receiver = Arc::new(Mutex::new(receiver));
@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn handle_notification(
-    application: gtk::Application,
+    application: adw::Application,
     receiver: Arc<Mutex<Receiver<Message>>>,
     iface: Rc<IFaceRef>,
     runtime_data: RuntimeData,
@@ -135,7 +135,7 @@ fn handle_notification(
 // FIXME too much windows breaks system
 fn new_notification(
     details: Details,
-    application: gtk::Application,
+    application: adw::Application,
     iface: Rc<IFaceRef>,
     runtime_data: RuntimeData,
 ) {
@@ -187,6 +187,7 @@ fn new_notification(
             #[strong]
             runtime_data,
             move || {
+                window.inner.remove_css_class("fullscreen"); // layer-shell hack :(
                 if window.inner.is_mapped() {
                     margins_update(runtime_data.clone());
                     glib::ControlFlow::Break

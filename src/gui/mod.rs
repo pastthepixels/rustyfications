@@ -3,7 +3,7 @@ pub mod window;
 
 use gtk::prelude::*;
 
-pub fn build_ui(application: &gtk::Application) {
-    let w = gtk::Window::new();
+pub fn build_ui(application: &adw::Application) {
+    let w = adw::Window::new();
     w.set_application(Some(application));
 }
