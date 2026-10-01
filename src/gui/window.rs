@@ -352,6 +352,7 @@ impl Window {
             .build();
         let app_icon = gtk::Image::builder()
             .name("app_icon")
+            .css_classes(["lowres-icon"])
             .hexpand(true)
             .halign(Align::End)
             .visible(true)

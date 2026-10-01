@@ -41,9 +41,30 @@ mod css {
 
         provider.load_from_data(&format!(
             "
+
+    @keyframes slide {{
+        from {{
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0px) scale(1);
+        }}
+    }}
+    
     #notification {{
       padding: 4pt;
       box-shadow: unset;
+    }}
+
+    #notification.hide {{
+      opacity: 0;
+    }}
+
+    #notification:not(.hide) {{
+      opacity: 1;
+      animation: slide 0.3s ease;
     }}
     
     #notification.hover {{

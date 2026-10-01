@@ -177,6 +177,7 @@ fn new_notification(
         }
     ));
 
+    window.inner.add_css_class("hide");
     window.inner.present();
 
     glib::timeout_add_local(
@@ -187,6 +188,7 @@ fn new_notification(
             #[strong]
             runtime_data,
             move || {
+                window.inner.remove_css_class("hide");
                 window.inner.remove_css_class("fullscreen"); // layer-shell hack :(
                 if window.inner.is_mapped() {
                     margins_update(runtime_data.clone());
