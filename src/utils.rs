@@ -54,8 +54,11 @@ mod css {
     }}
     
     #notification {{
-      padding: 4pt;
       box-shadow: unset;
+    }}
+
+    #notification .content {{        
+      padding: 4pt;
     }}
 
     #notification.hide {{

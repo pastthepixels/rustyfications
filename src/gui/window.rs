@@ -6,7 +6,7 @@ use adw::prelude::*;
 use gtk::{
     gdk_pixbuf::Pixbuf,
     gio,
-    glib::{self, clone, JoinHandle},
+    glib::{self, clone, ControlFlow, JoinHandle, SourceId},
     pango::{self, EllipsizeMode},
     Align, Justification, Orientation,
 };
@@ -29,12 +29,14 @@ pub struct Window {
     icon: gtk::Image,
     summary: gtk::Label,
     app_icon: gtk::Image,
+    progress: gtk::ProgressBar,
     body: gtk::Label,
     reply_entry: gtk::Entry,
     reply_revealer: gtk::Revealer,
     actions_box: gtk::Box,
     expire_timeout: Duration,
     thandle: Rc<RefCell<Option<JoinHandle<()>>>>,
+    uhandle: Rc<RefCell<Option<SourceId>>>,
     pub inner: adw::ApplicationWindow,
 }
 
@@ -44,11 +46,30 @@ impl Window {
             h.abort();
             info!("Timeout aborted for window id: {}", self.id);
         }
+        if let Some(u) = self.uhandle.borrow_mut().take() {
+            u.remove();
+            info!("Timeout update timer aborted for window id: {}", self.id);
+        }
+        self.progress.set_fraction(1.);
     }
 
     pub fn start_timeout(&self) {
         if self.thandle.borrow().is_none() {
             info!("Starting timeout for window id: {}", self.id);
+            // Automatically updating the progress bar
+            let update_freq = Duration::from_millis(10);
+            let update_frac = update_freq.div_duration_f64(self.expire_timeout);
+            self.uhandle.borrow_mut().replace(glib::timeout_add_local(
+                update_freq,
+                clone!(
+                    #[strong(rename_to=s)]
+                    self,
+                    move || {
+                        s.progress.set_fraction(s.progress.fraction() - update_frac);
+                        ControlFlow::Continue
+                    }
+                ),
+            ));
             self.thandle
                 .borrow_mut()
                 .replace(glib::spawn_future_local(clone!(
@@ -307,6 +328,7 @@ impl Window {
         unsafe {
             self.inner.set_data("close-reason", reason);
         }
+        self.stop_timeout();
         self.inner.close();
     }
 
@@ -342,6 +364,9 @@ impl Window {
             .height_request(config.window_size.1)
             .name("notification")
             .build();
+
+        let progress = gtk::ProgressBar::builder().fraction(1.).build();
+        progress.add_css_class("osd");
 
         let app_name = gtk::Label::builder()
             .name("app_name")
@@ -420,6 +445,7 @@ impl Window {
 
         let content = gtk::Box::builder()
             .name("content")
+            .css_classes(["content"])
             .orientation(Orientation::Vertical)
             .valign(Align::Start)
             .spacing(5)
@@ -447,7 +473,10 @@ impl Window {
         main_box.append(&body_box);
         main_box.append(&actions_box);
 
-        inner.set_content(Some(&main_box));
+        let overlay = gtk::Overlay::builder().child(&main_box).build();
+        overlay.add_overlay(&progress);
+
+        inner.set_content(Some(&overlay));
 
         Self {
             id: details.id,
@@ -459,8 +488,10 @@ impl Window {
             reply_entry,
             reply_revealer,
             actions_box,
+            progress,
             expire_timeout: details.expire_timeout,
             thandle: Default::default(),
+            uhandle: Default::default(),
             inner,
         }
     }
