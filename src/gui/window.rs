@@ -96,6 +96,14 @@ impl Window {
         init_layer_shell(&window.inner);
         window.inner.set_application(Some(&application));
         window.inner.add_css_class("selectable");
+        window.inner.connect_close_request(clone!(
+            #[strong]
+            window,
+            move |_| {
+                window.stop_timeout();
+                glib::Propagation::Proceed
+            }
+        ));
 
         window.setup_reply_handler(details, iface.clone());
         runtime_data
@@ -208,14 +216,14 @@ impl Window {
         if let Some(icon_name) =
             app_info.and_then(|app| app.icon().and_then(|icon| icon.to_string()))
         {
+            self.app_icon.set_visible(true);
             if PathBuf::from(icon_name.clone()).is_absolute() {
                 self.app_icon.set_from_file(Some(icon_name));
             } else {
                 self.app_icon.set_icon_name(Some(&icon_name));
             }
         } else {
-            self.app_icon
-                .set_icon_name(Some(&CONFIG.lock().unwrap().window_close_icon));
+            self.app_icon.set_visible(false);
         }
     }
 
@@ -326,7 +334,6 @@ impl Window {
         unsafe {
             self.inner.set_data("close-reason", reason);
         }
-        self.stop_timeout();
         self.inner.close();
     }
 
@@ -498,19 +505,6 @@ impl Window {
         let mut _self = Self::build_widgets_tree(&value);
         _self.update_from_details(&value, iface.clone());
 
-        // close_button_events
-        let gesture_click = gtk::GestureClick::builder().build();
-        _self.app_icon.add_controller(gesture_click.clone());
-        gesture_click.connect_released(clone!(
-            #[strong(rename_to=s)]
-            _self,
-            move |gesture, _, _, _| {
-                s.close(Reason::Dismissed);
-
-                gesture.set_state(gtk::EventSequenceState::Claimed);
-            }
-        ));
-
         let event_conntroller_motion = gtk::EventControllerMotion::new();
         _self
             .app_icon
@@ -533,7 +527,7 @@ impl Window {
                     }
                 }
 
-                app_icon.set_icon_name(Some(&CONFIG.lock().unwrap().window_close_icon.clone()));
+                app_icon.set_visible(false);
             }
         ));
 
@@ -559,7 +553,6 @@ impl Window {
                 }
             }
         ));
-        // close_button_events_end
 
         // hover events
 
