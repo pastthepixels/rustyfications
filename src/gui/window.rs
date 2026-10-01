@@ -433,13 +433,19 @@ impl Window {
 
         let body = gtk::Label::builder()
             .name("body")
+            .css_classes(["body"])
             .justify(Justification::Left)
             .valign(Align::Fill)
             .halign(Align::Start)
             .wrap(true)
             .wrap_mode(pango::WrapMode::WordChar)
             .use_markup(true)
+            .visible(false)
             .build();
+
+        body.connect_label_notify(|b| {
+            b.set_visible(true);
+        });
 
         let reply_entry = gtk::Entry::builder()
             .name("reply-entry")
@@ -467,35 +473,13 @@ impl Window {
         content.append(&body);
         content.append(&reply_revealer);
 
-        let body_box = gtk::Box::builder()
-            .orientation(Orientation::Horizontal)
-            .css_classes(["body"])
-            .visible(false)
-            .spacing(5)
-            .build();
-        body.connect_label_notify(clone!(
-            #[strong]
-            body_box,
-            move |_| {
-                body_box.set_visible(true);
-            }
-        ));
-        icon.connect_visible_notify(clone!(
-            #[strong]
-            body_box,
-            move |_| {
-                body_box.set_visible(true);
-            }
-        ));
-        body_box.append(&icon);
-        body_box.append(&content);
-
         let header = adw::HeaderBar::new();
         let toolbar_view = adw::ToolbarView::new();
         let overlay = gtk::Overlay::builder().child(&toolbar_view).build();
-        toolbar_view.set_content(Some(&body_box));
+        toolbar_view.set_content(Some(&content));
         toolbar_view.add_top_bar(&header);
         toolbar_view.add_bottom_bar(&actions_box);
+        header.pack_start(&icon);
         header.pack_start(&summary_box);
         header.pack_end(&app_name_box);
         header.set_show_title(false);

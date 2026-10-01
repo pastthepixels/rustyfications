@@ -41,7 +41,6 @@ mod css {
 
         provider.load_from_data(&format!(
             "
-
     @keyframes slide {{
         from {{
             opacity: 0;
@@ -55,10 +54,12 @@ mod css {
     
     #notification {{
       box-shadow: unset;
+      transition: background 0.3s ease;
     }}
 
     #notification .body {{
-        margin: 4pt;
+        margin: 6pt 12pt;
+        margin-top: 0;
     }}
 
     #notification.hide {{

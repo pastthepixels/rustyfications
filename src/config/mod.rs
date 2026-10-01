@@ -108,7 +108,7 @@ mod defaults {
     }
 
     pub fn icon_size() -> i32 {
-        72
+        32
     }
 
     pub fn log_level() -> LevelFilter {
