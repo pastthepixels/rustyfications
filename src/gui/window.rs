@@ -473,6 +473,7 @@ impl Window {
         content.append(&body);
         content.append(&reply_revealer);
 
+        // Put everything in a bunch of containers - a HeaderBar, ToolbarView, Overlay, and lastly, a Clamp...
         let header = adw::HeaderBar::new();
         let toolbar_view = adw::ToolbarView::new();
         let overlay = gtk::Overlay::builder().child(&toolbar_view).build();
@@ -485,7 +486,12 @@ impl Window {
         header.set_show_title(false);
         overlay.add_overlay(&progress);
 
-        inner.set_content(Some(&overlay));
+        let clamp = adw::Clamp::builder()
+            .child(&overlay)
+            .maximum_size(config.window_size.0)
+            .build();
+
+        inner.set_content(Some(&clamp));
 
         Self {
             id: details.id,
