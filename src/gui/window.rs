@@ -6,7 +6,7 @@ use gtk::{
     gio,
     glib::{self, clone, ControlFlow, JoinHandle, SourceId},
     pango::{self, EllipsizeMode},
-    Align, Justification, Orientation,
+    Align, Justification, Orientation, Overflow,
 };
 use gtk_layer_shell::{KeyboardMode, LayerShell};
 #[allow(unused_imports)]
@@ -94,17 +94,34 @@ impl Window {
         info!("Building window from details: {:?}", details);
         let window = Window::from_details(details.clone(), iface.clone());
         init_layer_shell(&window.inner);
+        window.inner.child().unwrap().set_overflow(Overflow::Hidden);
         window.inner.set_application(Some(&application));
         window.inner.set_receives_default(true);
         window.inner.connect_close_request(clone!(
             #[strong]
             window,
-            move |_| {
-                unsafe {
-                    window.inner.set_data("close-reason", Reason::Dismissed);
-                }
+            move |w| {
                 window.stop_timeout();
-                glib::Propagation::Proceed
+                window.progress.set_fraction(0.);
+                // Set close reason if it doesn't exist
+                unsafe {
+                    if w.data::<Reason>("close-reason").is_none() {
+                        w.set_data("close-reason", Reason::Dismissed);
+                    }
+                }
+                // Timeout
+                if !w.has_css_class("closing") {
+                    let w = w.clone();
+                    w.add_css_class("closing");
+                    // FIXME hard coded animation timeout :(
+                    glib::timeout_add_local(Duration::from_millis(300), move || {
+                        w.close();
+                        ControlFlow::Break
+                    });
+                    glib::Propagation::Stop
+                } else {
+                    glib::Propagation::Proceed
+                }
             }
         ));
 

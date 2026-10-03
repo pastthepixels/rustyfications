@@ -44,17 +44,40 @@ mod css {
     @keyframes slide {{
         from {{
             opacity: 0;
-            transform: translateY(-20px) scale(0.95);
+            transform: translateY(-20pt) scale(0.95);
         }}
         to {{
             opacity: 1;
-            transform: translateY(0px) scale(1);
+            transform: translateY(0pt) scale(1);
+        }}
+    }}
+
+    
+    @keyframes slide_r {{
+        from {{
+            opacity: 1;
+            transform: translateY(0pt) scale(1);
+        }}
+
+        to {{
+            opacity: 0;
+            transform: translateY(20pt) scale(0.95);
         }}
     }}
     
+
+    /* Notification hacks. Watch out, here be dragons (it's me, I'm the dragon)
+       In order to get smooth animations, I had to basically treat Adw::Window as a popover, meaning I had to manually style
+       dialog-host and rip out the styles for windows. Libadwaita has a bit of hard coding in its CSS, so I had to copy that over.
+       Good news! Still easy to theme as always, just change the color variables. Bad news! If libadwaita changes, I'm screwed.
+       ~ spike */
+
     #notification {{
       box-shadow: unset;
-      transition: background 0.3s ease;
+      background: unset;
+      padding: 8pt; /** TODO take from config edge padding */
+      border-radius: 0px;
+      outline: unset;
     }}
 
     #notification .body {{
@@ -66,16 +89,31 @@ mod css {
         margin-top: 4pt;
     }}
 
-    #notification.hide {{
+    #notification > dialog-host {{
+        background-color: var(--window-bg-color);
+        /* copied from libadwaita */
+        box-shadow: 0 0 8px 5px RGB(0 0 0 / 8%),
+                0 0 5px 2px RGB(0 0 0 / 3%),
+                0 0 0 1px RGB(0 0 0 / 2%);
+        transition: background 0.3s ease;
+        border: 1px solid var(--border-color);
+        border-radius: 12pt;
+    }}
+
+    #notification.hide > dialog-host {{
       opacity: 0;
     }}
 
-    #notification:not(.hide) {{
+    #notification:not(.hide) > dialog-host {{
       opacity: 1;
       animation: slide 0.3s ease;
     }}
+
+    #notification.closing > dialog-host {{
+      animation: slide_r 0.3s ease;
+    }}
     
-    #notification.hover {{
+    #notification.hover > dialog-host {{
       background-color: color-mix(in srgb, var(--window-fg-color) 5%, var(--window-bg-color));
     }}",
         ));
