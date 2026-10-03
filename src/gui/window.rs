@@ -489,7 +489,7 @@ impl Window {
         let clamp = adw::Clamp::builder()
             .child(&overlay)
             .maximum_size(config.window_size.0)
-            .tightening_threshold(400)
+            .tightening_threshold(config.window_size.0 * 2)
             .build();
 
         inner.set_content(Some(&clamp));
