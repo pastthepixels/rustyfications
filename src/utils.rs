@@ -76,7 +76,7 @@ mod css {
     }}
     
     #notification.hover {{
-      background-color: color-mix(in srgb, var(--window-fg-color) 15%, var(--window-bg-color));
+      background-color: color-mix(in srgb, var(--window-fg-color) 5%, var(--window-bg-color));
     }}",
         ));
 
