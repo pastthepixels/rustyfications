@@ -31,7 +31,7 @@ pub struct Window {
     body: gtk::Label,
     reply_entry: gtk::Entry,
     reply_revealer: gtk::Revealer,
-    actions_box: gtk::Box,
+    actions_bar: gtk::ActionBar,
     expire_timeout: Duration,
     thandle: Rc<RefCell<Option<JoinHandle<()>>>>,
     uhandle: Rc<RefCell<Option<SourceId>>>,
@@ -254,17 +254,17 @@ impl Window {
     }
 
     fn update_actions(&self, details: &Details, iface: Rc<IFaceRef>) {
-        self.actions_box.set_visible(false);
-        self.actions_box
+        self.actions_bar.set_visible(false);
+        self.actions_bar
             .observe_children()
             .into_iter()
             .filter_map(|child| child.ok().and_downcast::<gtk::Widget>())
-            .for_each(|child| self.actions_box.remove(&child));
+            .for_each(|child| self.actions_bar.remove(&child));
         for action in details.actions.iter().filter(|a| a.key != "default") {
             // let action_button =
-            self.actions_box
-                .append(&self.create_action_button(action, details, iface.clone()));
-            self.actions_box.set_visible(true);
+            self.actions_bar
+                .pack_start(&self.create_action_button(action, details, iface.clone()));
+            self.actions_bar.set_visible(true);
         }
     }
 
@@ -276,7 +276,7 @@ impl Window {
     ) -> gtk::Button {
         let details = details.clone();
 
-        let button = gtk::Button::builder().hexpand(true).build();
+        let button = gtk::Button::builder().build();
         if !details.hints.action_icons {
             button.set_label(&action.text);
         } else {
@@ -440,12 +440,7 @@ impl Window {
             .wrap(true)
             .wrap_mode(pango::WrapMode::WordChar)
             .use_markup(true)
-            .visible(false)
             .build();
-
-        body.connect_label_notify(|b| {
-            b.set_visible(true);
-        });
 
         let reply_entry = gtk::Entry::builder()
             .name("reply-entry")
@@ -457,19 +452,23 @@ impl Window {
             .child(&reply_entry)
             .build();
 
-        let actions_box = gtk::Box::builder()
-            .name("actions")
-            .orientation(Orientation::Horizontal)
-            .spacing(5)
-            .build();
+        let actions_bar = gtk::ActionBar::builder().name("actions").build();
 
         let content = gtk::Box::builder()
             .name("content")
-            .css_classes(["content"])
+            .css_classes(["content", "card"])
             .orientation(Orientation::Vertical)
             .valign(Align::Start)
             .spacing(5)
+            .visible(false)
             .build();
+        body.connect_label_notify(clone!(
+            #[strong]
+            content,
+            move |_| {
+                content.set_visible(true);
+            }
+        ));
         content.append(&body);
         content.append(&reply_revealer);
 
@@ -479,7 +478,8 @@ impl Window {
         let overlay = gtk::Overlay::builder().child(&toolbar_view).build();
         toolbar_view.set_content(Some(&content));
         toolbar_view.add_top_bar(&header);
-        toolbar_view.add_bottom_bar(&actions_box);
+        toolbar_view.add_bottom_bar(&actions_bar);
+        header.pack_start(&gtk::Separator::builder().css_classes(["spacer"]).build());
         header.pack_start(&icon);
         header.pack_start(&summary_box);
         header.pack_end(&app_name_box);
@@ -489,6 +489,7 @@ impl Window {
         let clamp = adw::Clamp::builder()
             .child(&overlay)
             .maximum_size(config.window_size.0)
+            .tightening_threshold(400)
             .build();
 
         inner.set_content(Some(&clamp));
@@ -502,7 +503,7 @@ impl Window {
             body,
             reply_entry,
             reply_revealer,
-            actions_box,
+            actions_bar,
             progress,
             expire_timeout: details.expire_timeout,
             thandle: Default::default(),

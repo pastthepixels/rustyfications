@@ -59,7 +59,11 @@ mod css {
 
     #notification .body {{
         margin: 6pt 12pt;
-        margin-top: 0;
+    }}
+
+    #notification .content {{
+        margin: 8pt;
+        margin-top: 4pt;
     }}
 
     #notification.hide {{
