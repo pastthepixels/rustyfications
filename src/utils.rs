@@ -80,13 +80,10 @@ mod css {
       outline: unset;
     }}
 
-    #notification .body {{
-        margin: 6pt 12pt;
-    }}
-
     #notification .content {{
         margin: 8pt;
         margin-top: 4pt;
+        padding: 6pt 10pt;
     }}
 
     #notification > dialog-host {{

@@ -30,7 +30,6 @@ pub struct Window {
     progress: gtk::ProgressBar,
     body: gtk::Label,
     reply_entry: gtk::Entry,
-    reply_revealer: gtk::Revealer,
     actions_bar: gtk::ActionBar,
     expire_timeout: Duration,
     thandle: Rc<RefCell<Option<JoinHandle<()>>>>,
@@ -309,8 +308,7 @@ impl Window {
                 self,
                 move |_| {
                     if s.reply_entry.text().is_empty() {
-                        s.reply_revealer
-                            .set_reveal_child(!s.reply_revealer.reveals_child());
+                        s.reply_entry.set_visible(true);
                     } else {
                         s.reply_entry.emit_activate();
                     }
@@ -462,11 +460,7 @@ impl Window {
         let reply_entry = gtk::Entry::builder()
             .name("reply-entry")
             .placeholder_text("Reply")
-            .build();
-        let reply_revealer = gtk::Revealer::builder()
-            .name("reply-revealer")
-            .reveal_child(false)
-            .child(&reply_entry)
+            .visible(false)
             .build();
 
         let actions_bar = gtk::ActionBar::builder().name("actions").build();
@@ -487,7 +481,7 @@ impl Window {
             }
         ));
         content.append(&body);
-        content.append(&reply_revealer);
+        content.append(&reply_entry);
 
         // Put everything in a bunch of containers - a HeaderBar, ToolbarView, Overlay, and lastly, a Clamp...
         let header = adw::HeaderBar::new();
@@ -519,7 +513,6 @@ impl Window {
             summary,
             body,
             reply_entry,
-            reply_revealer,
             actions_bar,
             progress,
             expire_timeout: details.expire_timeout,
