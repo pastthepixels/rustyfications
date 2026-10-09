@@ -1,15 +1,12 @@
-# rustyfications
+# rustyfications (fork)
 
-Rusty notification daemon for Wayland.
+Continuation of rustyfications, a notification daemon written in Rust/Gtk4/layer-shell (and now libadwaita).
+Really I didn't wanna deal with dbus so I just forked something and ripped out the GUI and wrote my own. Screenshots!
 
----
-![screenshot](assets/screenshot.png)
+<img width="1005" height="462" alt="Screenshot of rustyfications with a notification with an image, title, description, and actions." src="https://github.com/user-attachments/assets/41440100-f74f-4b4f-b417-35a243658b70" />
 
-![inline-reply](assets/inline-reply.png)
 
-![rickroll](assets/rickroll.png)
 
-`Rust` | `Gtk4` | `gtk4-layer-shell`
 
 ---
 
